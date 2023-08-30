@@ -1,0 +1,146 @@
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{fragments/layout.html}"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<div layout:fragment="main">
+	<script type="text/javascript" th:inline="javascript">
+	
+	//핸드폰번호
+	function validatePhoneNumber(input) {
+        var phoneNumber = input.value;
+
+        // 숫자를 제외한 모든 문자 제거
+        phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
+
+        // 길이 제한 (12글자)
+        if (phoneNumber.length > 12) {
+            phoneNumber = phoneNumber.slice(0, 11);
+        }
+
+        input.value = phoneNumber;
+
+    }
+	
+$(function() {
+	
+	var passwordLength = false;
+	var passwordMatch = false;
+	
+	//비밀번호 글자수 확인
+    $("#password").on("keyup", function() {
+    	$("#checkPass").val("");
+    	 $("#ConfirmPass").html("");
+        var password = $("#password").val();
+        var message = $("#ConfirmPasswordLength");
+        
+        if (password.length < 4) {
+        	message.css("color", "red");
+            message.text("4자이상 입력하세요.");
+            passwordLength = false; // 비밀번호 불일치하므로 체크 상태를 false로 설정
+            
+        } else {
+        	message.text(""); 
+        	passwordLength = true;
+        }
+        updateSubmitButtonState();
+        
+    });
+	
+    //비밀번호 확인
+    $("#checkPass").on("keyup", function() {
+        var password = $("#password").val();
+        var confirmPassword = $("#checkPass").val();
+        var message = $("#ConfirmPass");
+        
+        if (password === confirmPassword) {
+            message.css("color", "blue");
+            message.text("비밀번호가 일치합니다.");
+            passwordMatch = true; // 비밀번호 일치하므로 체크 상태를 true로 설정
+            
+        } else {
+            message.css("color", "red");
+            message.text("비밀번호가 일치하지 않습니다.");
+            passwordMatch = false; // 비밀번호 불일치하므로 체크 상태를 false로 설정
+        }
+        updateSubmitButtonState();
+    });
+
+    // 확인 버튼의 상태를 업데이트하는 함수
+    function updateSubmitButtonState() {
+        var submitButton = $("#submitButton");
+        
+        // 비밀번호 일치할 때만 확인 버튼 활성화
+        if (passwordMatch && passwordLength) {
+            submitButton.prop("disabled", false);
+        } else {
+            submitButton.prop("disabled", true);
+        }
+    }
+    
+    
+});
+
+</script>
+
+
+	<main class="flex-shrink-0">
+		<div class="container px-5 pb-5" style="height: 600px;margin-top: 30px" >
+			<section class="page-section" id="contact">
+            <div class="container">
+                <!-- Contact Section Heading-->
+                <h2 class="page-section-heading text-center text-uppercase text-secondary mb-0">회원정보 수정</h2>
+                
+                <!-- Contact Section Form-->
+                <div class="row justify-content-center"  style="margin-top: 50px">
+                    <div class="col-lg-8 col-xl-7">
+                        <form method="post" th:action="@{/users/updateUser}" enctype="multipart/form-data">
+                            <!-- Id(사원번호) input-->
+                            <div class="form-floating mb-3">
+                            	<span style="margin-right: 30px">아이디</span>
+                            	<span id="userId" name="userId" th:text="${session.userDTO.userId}"></span>
+                            	<input type="hidden" name="userId" th:value="${session.userDTO.userId}">
+                            	<input type="hidden" name="userNo" th:value="${session.userDTO.userNo}">
+                            </div>
+                            
+                            <!-- Password input-->
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="password" name="password" type="password" required="required" placeholder="Enter Password" data-sb-validations="required" data-sb-can-submit="no">
+                                <label for="password">비밀번호 (4자리이상)</label>
+                                <div class="invalid-feedback" data-sb-feedback="password:required">비밀번호를 입력해주세요.</div>
+                                <div id="ConfirmPasswordLength"></div>
+                                <!-- <div class="invalid-feedback" data-sb-feedback="password:email">Email is not valid.</div> -->
+                            </div>
+                            <!-- Confirm Password input-->
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="checkPass" type="password" placeholder="Check password" required="required" data-sb-validations="required" data-sb-can-submit="no">
+                                <label for="checkPass">비밀번호 확인</label>
+                                <div class="invalid-feedback" data-sb-feedback="checkPass:required">비밀번호를 확인해주세요.</div>
+                                <div id="ConfirmPass"></div>
+                            </div>
+                            <!-- Name input-->
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="name" name="name" type="text" th:value="${session.userDTO.name}" required="required"  placeholder="Enter your name..." data-sb-validations="required" data-sb-can-submit="no">
+                                <label for="name">이름</label>
+                                <div class="invalid-feedback" data-sb-feedback="name:required">이름을 입력해주세요.</div>
+                            </div>
+                            <!-- Phone number input-->
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="tel" name="tel" type="text"  th:value="${session.userDTO.tel}" required="required"  placeholder="Enter your Phone Number..." oninput="validatePhoneNumber(this)" data-sb-validations="required" data-sb-can-submit="no">
+                                <label for="tel">연락처(번호만 입력)</label>
+                                <div class="invalid-feedback" data-sb-feedback="tel:required">연락처를 입력해주세요.</div>
+                            </div>
+                            <br>
+                           
+                            <a th:href="@{/}">메인화면으로</a>
+                            <button class="btn btn-primary btn-xl " id="submitButton" type="submit" style="float: right;">수정</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+		</div>		
+
+	</main>
+</div>
+</html>

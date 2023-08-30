@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{fragments/layout}"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<div layout:fragment="main">
+
+	<main class="flex-shrink-0">
+		<!-- Header-->
+		<header class="py-5">
+			<div class="container px-5 pb-5">
+				<div class="row gx-5 align-items-center">
+					<div class="col-xxl-5">
+						<!-- Header text content-->
+						<div class="text-center text-xxl-start">
+							<div
+								class="badge bg-gradient-primary-to-secondary text-white mb-4">
+								<div class="text-uppercase"> 정다운 프로젝트</div>
+							</div> 
+							<div class="fs-5 fw-light text-muted">커뮤니티 블라블라</div>
+							<h1 class="display-3 fw-bolder mb-5">
+								<span class="text-gradient d-inline">Blah_Blah</span>
+							</h1>
+							<div th:if="${session.userDTO == null}">
+								<div
+									class="d-grid gap-3 d-sm-flex justify-content-sm-center justify-content-xxl-start mb-3">
+									<a
+										class="btn btn-outline-primary btn-lg px-5 py-3 me-sm-3 fs-6 fw-bolder"
+										th:href="@{/users/joinForm}">회원가입</a>
+									<a class="btn btn-outline-primary btn-lg px-5 py-3 me-sm-3 fs-6 fw-bolder"
+										th:href="@{/users/loginForm}">로그인</a>
+								</div>
+								<div
+									class="d-grid gap-3 d-sm-flex justify-content-sm-center justify-content-xxl-start mb-3">
+									<!--<a class="btn btn-outline-primary btn-lg px-5 py-3 me-sm-3 fs-6 fw-bolder"
+										th:href="@{/users/loginForm}">로그인</a> 
+										 <a class="btn btn-outline-dark btn-lg px-5 py-3 fs-6 fw-bolder"
+										href="projects.html">관리자 로그인</a> -->
+								</div>
+							</div>
+							<div th:if="${session.userDTO != null}">
+								<div>
+									<a class="btn btn-outline-dark btn-lg px-5 py-3 fs-6 fw-bolder"
+										th:href="@{/posts/list/1}">게시판</a>
+								</div>
+							</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+		</header>
+	</main>
+</div>
+</html>

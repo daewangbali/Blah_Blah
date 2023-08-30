@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{fragments/layout.html}"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<div layout:fragment="main">
+
+	<main class="flex-shrink-0">
+		<div class="container px-5 pb-5">
+			<form method="post" th:action="@{/posts/modifyPost}"
+				enctype="multipart/form-data">
+				<table class="table">
+					<tr>
+						<td><input type="text" name="title" th:value="${post.title}"
+							required="required" style="width: 100%; border: none"></td>
+					</tr>
+					<tr>
+						<td><textarea rows="10" class="form-control" name="content"
+								th:text="${post.content}" required="required" style="width: 100%; border: none"></textarea></td>
+					</tr>
+
+				</table>
+
+				<div class="text-center">
+					<input type="hidden" name="postNo" value="postNo" th:value="${post.postNo}">
+					<br>
+					<button type="submit" class="btn btn-outline-primary">수정</button>
+					<button type="button" class="btn btn-light"
+						th:onclick="|location.href='@{/posts/list}'|">취소</button>
+				</div>
+			</form>
+
+		</div>
+	</main>
+</div>

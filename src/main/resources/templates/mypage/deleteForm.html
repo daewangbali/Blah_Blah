@@ -1,0 +1,94 @@
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{fragments/layout.html}"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<div layout:fragment="main">
+	<script type="text/javascript" th:inline="javascript">
+	
+	
+$(function() {
+	
+	var csrfToken = $("meta[name='_csrf']").attr("content");
+	var csrfHeader = $("meta[name='_csrf_header']").attr("content");
+	
+	
+	$("#deleteBtn").click(function() {
+		var userId =  $("#userId").val();
+		var password = $("#password").val();
+
+	    var user = {
+	        "userId": userId,
+	        "password": password
+	    };
+
+	    $.ajax({
+	        type: 'GET',
+	        url: '/users/deleteChkPass/' + userId +"/"+ password,
+	        //contentType: 'application/json',
+	        //data: JSON.stringify(user),
+	        //dataType: 'json',
+	        beforeSend: function(xhr) {
+	            xhr.setRequestHeader(csrfHeader, csrfToken);
+	        },
+	        success: function(result) {
+	        	if(result){
+	        		var deleteChk = confirm("탈퇴하시겠습니까??");
+	        		if(deleteChk){
+	        			$("#deleteForm").submit();	
+	        		}
+	        		
+	        	}else{
+	        		alert("비밀번호가 일치하지 않습니다.");
+	        	}
+	        },
+	        error: function(request, status, error) {
+	            console.log(error);
+	            alert("아이디체크 실패...");
+	        }
+	    });
+	});
+	
+	
+	var message = /*$[[message]]*/null;
+	if(message != null)
+		alert(message);
+    
+});
+
+</script>
+
+
+	<main class="flex-shrink-0">
+		<div class="container px-5 pb-5" style="height: 600px;margin-top: 30px" >
+			<section class="page-section" id="contact">
+            <div class="container">
+                <!-- Contact Section Heading-->
+                <h2 class="page-section-heading text-center text-uppercase text-secondary mb-0">회원탈퇴</h2>
+                
+                <!-- Contact Section Form-->
+                <div class="row justify-content-center"  style="margin-top: 50px">
+                    <div class="col-lg-8 col-xl-7">
+                        <form id="deleteForm" method="post" th:action="@{/users/deleteUser}">
+                            
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="password" name="password" type="password" required="required" placeholder="Enter Password" data-sb-validations="required" data-sb-can-submit="no">
+                                <label for="password">비밀번호</label>
+                                <div class="invalid-feedback" data-sb-feedback="password:required">비밀번호를 입력해주세요.</div>
+                                <div id="ConfirmPasswordLength"></div>
+                                <!-- <div class="invalid-feedback" data-sb-feedback="password:email">Email is not valid.</div> -->
+                            </div>
+                            <input name="userId" id="userId" type="hidden" th:value="${session.userDTO.userId}">
+                           
+                            <a th:href="@{/}">메인화면으로</a>
+                            <button class="btn btn-primary btn-xl " id="deleteBtn" type="button" style="float: right;">회원탈퇴</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+		</div>		
+
+	</main>
+</div>
+</html>

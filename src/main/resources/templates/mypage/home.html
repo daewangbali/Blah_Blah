@@ -1,0 +1,26 @@
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{fragments/layout.html}"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<div layout:fragment="main">
+	<script type="text/javascript" th:inline="javascript">
+$(function() {
+	
+});
+
+</script>
+
+
+	<main class="flex-shrink-0">
+		<div class="container px-5 pb-5" style="height: 600px" >
+			<nav class="nav flex-column" style="margin-top: 100px">
+			  
+			  <a class="nav-link" style="color: black;" th:href="@{/users/updateForm}">회원정보 수정</a>
+			  <a class="nav-link" style="color: black;" th:href="@{/users/deleteForm}">회원탈퇴</a>
+			</nav>
+		</div>		
+
+	</main>
+</div>
+</html>

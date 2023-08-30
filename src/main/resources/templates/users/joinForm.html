@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+	<head>
+		<meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <meta name="_csrf" th:content="${_csrf.token}" />
+		<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+        <title>Blah_Join</title>
+        <!-- Favicon-->
+        <link rel="icon" type="image/x-icon" href="login/assets/favicon.ico">
+        <!-- Custom Google font-->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+        <!-- Bootstrap icons-->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+        <!-- Core theme CSS (includes Bootstrap)-->
+        <link th:href="@{/login/css/styles.css}" rel="stylesheet">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    </head>
+<body>
+<script type="text/javascript" th:inline="javascript">
+
+	function validatePhoneNumber(input) {
+	    var phoneNumber = input.value;
+	
+	    // 숫자를 제외한 모든 문자 제거
+	    phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
+	
+	    // 길이 제한 (12글자)
+	    if (phoneNumber.length > 12) {
+	        phoneNumber = phoneNumber.slice(0, 11);
+	    }
+	
+	    input.value = phoneNumber;
+	
+	}
+	
+	$(function() {
+		
+		var csrfToken = $("meta[name='_csrf']").attr("content");
+		var csrfHeader = $("meta[name='_csrf_header']").attr("content");
+		
+		var originalUserId = ""; // 이전 아이디 상태 저장
+		var idCheck = false; // 아이디 중복 체크 상태
+		var passwordLength = false; // 비밀번호 4자 이상인지 확인 여부
+	    var passwordMatch = false; // 비밀번호 일치 여부
+		
+		//아이디 제한
+		var usernameInput = $("#userId");
+
+        // 입력값이 변경될 때 이벤트 핸들러 추가
+        usernameInput.on("input", function() {
+            // 정규 표현식을 사용하여 입력값을 검사
+            var pattern = /^[A-Za-z0-9]+$/;
+            if (!pattern.test(usernameInput.val())) {
+                // 영어와 숫자 이외의 문자를 입력한 경우, 입력값을 잘라내고 다시 설정
+                usernameInput.val(usernameInput.val().replace(/[^A-Za-z0-9]+/g, ''));
+            }
+        });
+        
+        
+        //아이디 중복확인
+        $("#checkButton").click(function() {
+            var userId = $("#userId").val();
+            
+            if(userId != ""){
+            	$.ajax({
+                    url: "/users/checkDuplicateId/" + userId, // 서버의 엔드포인트 URL
+                    type: "GET",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader(csrfHeader, csrfToken);
+                    },
+                    success: function(response) {
+                        if (response) {
+                        	$("#message").css("color", "red");
+                            $("#message").text("이미 사용 중인 아이디입니다.").color("red");
+                            idCheck = false; // 중복 아이디이므로 체크 상태를 false로 설정
+                        } else {
+                        	$("#message").css("color", "blue");
+                            $("#message").text("사용 가능한 아이디입니다.");
+                            idCheck = true; // 중복 아이디가 아니므로 체크 상태를 true로 설정
+                        }
+                        checkSubmitButton();
+                    },
+                    error: function() {
+                        alert("서버와 통신 중 오류가 발생했습니다.");
+                    }
+                });
+            	
+            } else {
+                $("#message").text(""); // 아이디가 비어있으면 메시지를 지웁니다.
+                idCheck = false; // 아이디가 비어있으므로 체크 상태를 false로 설정
+                checkSubmitButton(); // 회원가입 버튼 상태 체크
+            }
+        });
+        
+        $("#userId").on("input", function() {
+            var userId = $(this).val();
+
+            if (userId != "") {
+                // 이 부분에서 필요한 유효성 검사 코드를 추가할 수 있습니다.
+            }
+
+            // 아이디가 변경되면 아이디 중복 확인 상태를 false로 설정하고 버튼 상태 업데이트
+            idCheck = false;
+            checkSubmitButton();
+        });
+        
+        //비밀번호 글자수 확인
+        $("#password").on("keyup", function() {
+            var password = $("#password").val();
+            var message = $("#ConfirmPasswordLength");
+            
+            if (password.length < 4) {
+            	message.css("color", "red");
+                message.text("4자이상 입력하세요.");
+                passwordLength = false; // 비밀번호 불일치하므로 체크 상태를 false로 설정
+                
+            } else {
+            	message.text(""); 
+            	passwordLength = true;
+            }
+            checkSubmitButton();
+        });
+        
+        //비밀번호 확인
+        $("#checkPass").on("keyup", function() {
+            var password = $("#password").val();
+            var confirmPassword = $("#checkPass").val();
+            var message = $("#ConfirmPass");
+            
+            if (password === confirmPassword) {
+                message.css("color", "blue");
+                message.text("비밀번호가 일치합니다.");
+                passwordMatch = true; // 비밀번호 일치하므로 체크 상태를 true로 설정
+                
+            } else {
+                message.css("color", "red");
+                message.text("비밀번호가 일치하지 않습니다.");
+                passwordMatch = false; // 비밀번호 불일치하므로 체크 상태를 false로 설정
+            }
+            checkSubmitButton();
+        });
+        
+        //회원가입버튼 활성화여부
+        function checkSubmitButton() {
+            if (idCheck && passwordMatch && passwordLength) {
+                $("#submitButton").prop("disabled", false); // 두 조건 모두 충족 시 버튼 활성화
+            } else {
+                $("#submitButton").prop("disabled", true); // 하나라도 충족하지 않으면 버튼 비활성화
+            }
+        }
+        
+        
+        $("#submitButton").click(function() {
+        	// 폼을 서버로 제출
+        	var userId = $("#userId").val();
+        	var password = $("#password").val();
+        	var name = $("#name").val();
+        	var tel = $("#tel").val();
+
+        	var usersDTO = {
+        	    "userId": userId,
+        	    "password": password,
+        	    "name": name,
+        	    "tel": tel
+        	};
+        	
+            // 서버로 데이터 전송
+            $.ajax({
+                url: '/users/registerUser',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(usersDTO),
+                dataType: 'json',
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader(csrfHeader, csrfToken);
+                },
+                success: function(response) {
+                    // 서버에서의 응답 처리
+                    if (response) {
+                        // 성공적으로 회원가입이 완료된 경우
+                        $("#submitSuccessMessage").removeClass("d-none"); // 성공 메시지 표시
+                    } else {
+                        // 회원가입 중 오류 발생한 경우
+                        $("#submitErrorMessage").removeClass("d-none"); // 오류 메시지 표시
+                    }
+                },
+                error: function(request, status, error) {
+		            console.log(error);
+		            alert("서버와 통신 실패...");
+		        }
+            });
+        });
+        
+        
+	});
+
+</script>
+<section class="page-section" id="contact">
+            <div class="container">
+                <!-- Contact Section Heading-->
+                <h2 class="page-section-heading text-center text-uppercase text-secondary mb-0">회원가입</h2>
+                <!-- Icon Divider-->
+                <div class="divider-custom">
+                    <div class="divider-custom-line"></div>
+                    <div class="divider-custom-icon"><i class="bi bi-star-fill"></i></div>
+                    <div class="divider-custom-line"></div>
+                </div>
+                <!-- Contact Section Form-->
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 col-xl-7">
+                        <!-- * * * * * * * * * * * * * * *-->
+                        <!-- * * SB Forms Contact Form * *-->
+                        <!-- * * * * * * * * * * * * * * *-->
+                        <!-- This form is pre-integrated with SB Forms.-->
+                        <!-- To make this form functional, sign up at-->
+                        <!-- https://startbootstrap.com/solution/contact-forms-->
+                        <!-- to get an API token!-->
+                        <form id="contactForm"  data-sb-form-api-token="API_TOKEN">
+                            <!-- Id(사원번호) input-->
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="userId" name="userId" type="text" placeholder="Enter your ID..." data-sb-validations="required" data-sb-can-submit="no">
+                                <button class="btn btn-outline-primary btn-sm" style="margin-top: 5px" type="button" id="checkButton">중복 확인</button>
+                                <p id="message"></p>
+                                <label for="userId">아이디</label>
+                                <div class="invalid-feedback" data-sb-feedback="userId:required">아이디를 입력해주세요.</div>
+                            </div>
+                            <!-- Password input-->
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="password" name="password" type="password" placeholder="Enter Password" data-sb-validations="required" data-sb-can-submit="no">
+                                <label for="password">비밀번호 (4자리이상)</label>
+                                <div class="invalid-feedback" data-sb-feedback="password:required">비밀번호를 입력해주세요.</div>
+                                <div id="ConfirmPasswordLength"></div>
+                                <!-- <div class="invalid-feedback" data-sb-feedback="password:email">Email is not valid.</div> -->
+                            </div>
+                            <!-- Confirm Password input-->
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="checkPass" type="password" placeholder="Check password" data-sb-validations="required" data-sb-can-submit="no">
+                                <label for="checkPass">비밀번호 확인</label>
+                                <div class="invalid-feedback" data-sb-feedback="checkPass:required">비밀번호를 확인해주세요.</div>
+                                <div id="ConfirmPass"></div>
+                            </div>
+                            <!-- Name input-->
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="name" name="name" type="text" placeholder="Enter your name..." data-sb-validations="required" data-sb-can-submit="no">
+                                <label for="name">이름</label>
+                                <div class="invalid-feedback" data-sb-feedback="name:required">이름을 입력해주세요.</div>
+                            </div>
+                            <!-- Phone number input-->
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="tel" name="tel" type="text" placeholder="Enter your Phone Number..." oninput="validatePhoneNumber(this)" data-sb-validations="required" data-sb-can-submit="no">
+                                <label for="tel">연락처</label>
+                                <div class="invalid-feedback" data-sb-feedback="tel:required">연락처를 입력해주세요.</div>
+                            </div>
+                            <br>
+                            <!-- Submit success message-->
+                           <div class="d-none" id="submitSuccessMessage">
+                                <div class="text-center mb-3">
+                                    <div class="fw-bolder">회원가입 완료! 로그인 해주세요.</div>
+                                    
+                                    <br>
+                                    <a th:href="@{/users/loginForm}">로그인페이지로 이동</a>
+                                </div>
+                            </div>
+                            <!-- Submit error message-->
+                            <!-- an error submitting the form-->
+                            <div class="d-none" id="submitErrorMessage"><div class="text-center text-danger mb-3">Error sending message!</div></div>
+                            <!-- Submit Button-->
+                            <a th:href="@{/}">메인화면으로</a>
+                            <button class="btn btn-primary btn-xl disabled" id="submitButton" type="button" style="float: right;">회원가입</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Bootstrap core JS-->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Core theme JS-->
+        <script th:src="@{/login/js/scripts.js}"></script>
+        <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
+        <!-- * *                               SB Forms JS                               * *-->
+        <!-- * * Activate your form at https://startbootstrap.com/solution/contact-forms * *-->
+        <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
+        <script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>
+</body>
+</html>

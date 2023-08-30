@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{fragments/layout.html}"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<script src="/js/ckeditor/ckeditor.js"></script>
+<div layout:fragment="main">
+
+	<script type="text/javascript" th:inline="javascript">
+	
+$(function() {
+	
+	commentList();
+	
+	//댓글등록 form show
+	function showCommentForm(){
+		$("#commentRegiBtn").prop("disabled", true);
+        $("#commentRegiShowForm").css("display", "block");
+        $("#showCommentFormBtn").css("display", "none");
+	}
+	
+	//댓글등록 form none
+	function noneCommentForm(){
+		$("#commentRegiShowForm").css("display", "none");
+        $("#showCommentFormBtn").css("display", "block");
+	}
+	
+	//댓글 등록 폼 show
+	$("#showCommentFormBtn").click(function() {
+		showCommentForm();
+		$("#commentUpdateBtn").css("display", "none");
+    });
+	
+	//댓글 등록 폼 숨기기
+	$("#commentRegiCanBtn").click(function() {
+		$("#commentContent").val("");
+		noneCommentForm();
+    });
+	
+	//댓글 작성시 버튼 활성화
+	$("#commentContent ").on("keyup", function() {
+        // textarea의 입력값을 가져온다
+        var commentContent = $(this).val().trim();
+        
+        // 등록 버튼의 활성화 여부를 결정한다
+        if (commentContent !== "") {
+            $("#commentRegiBtn").prop("disabled", false);
+            $("#commentUpdateBtn").prop("disabled", false);
+        } else {
+            $("#commentRegiBtn").prop("disabled", true);
+            $("#commentUpdateBtn").prop("disabled", true);
+        }
+    });
+
+	
+	//댓글 조회
+	function commentList() {
+		
+		var postNo = [[${{post.postNo}}]];
+		$.ajax({
+	        type: 'GET',
+	        url: '/comments/' + postNo,
+	        success: function(commentsList) {
+	        	
+	        	let commnInfo="";
+	        	//json array 넘어오는 것을 넣어주기
+				for(let i=0;i<commentsList.length;i++){
+					
+					//삭제된 부모 댓글(대댓글 존재 O)
+					if(commentsList[i].isDeleted == true){
+						commnInfo+="<div style='margin-bottom: 10px;'>댓글이 삭제되었습니다.</div>";
+						commnInfo+="<hr style='color: gray; border: 1px'>"
+						
+					}else{
+						var dateString = commentsList[i].createdDate; // 서버에서 받은 날짜 데이터
+				        var formattedDate = formatDate(dateString); // 포맷팅된 날짜
+				        
+				        commnInfo+="<li id='commentByList"+commentsList[i].commentNo+"' style='list-style: none; margin-bottom: 15px'>";
+				        
+				        if(commentsList[i].parent != null){
+				        	//commnInfo+="<span><i class='bi bi-arrow-return-right'></i>";
+				        	commnInfo+="<div style='margin-left: 30px;'>"	;
+				        	
+				        }
+				        commnInfo+="<div>-"+commentsList[i].commentNo+"</div>";
+				        
+				        commnInfo+="<div style='font-weight:bold; font-size:large;'>"+commentsList[i].writer.id
+				    		+"<span style='float: right;'><div class='dropdown'><button class='dropdown-toggle' type='button' id='dropdownMenuButton1' data-bs-toggle='dropdown' style='border: 0' aria-expanded='false'><i class='bi bi-three-dots-vertical'></i></button>"
+				    		+"<ul class='dropdown-menu' aria-labelledby='dropdownMenuButton1'>"
+				    		+"<li><button type='button' class='btn btn-light updateCo dropdown-item' id='updateCommentBtn"+commentsList[i].commentNo+"'>수정</button></li>"
+				    		+"<li><button type='button' class='btn btn-light deleteCo dropdown-item' id='deleteCommentBtn"+commentsList[i].commentNo+"'>삭제</button></li></ul></div>"
+				    		+"</span></div>";
+				        commnInfo+="<div>"+commentsList[i].content+"</div>";
+				        if(commentsList[i].parent == null){
+				        	commnInfo+="<div style='color: gray; font-size:small;'>"+formattedDate+"<button type='button' class='addReplyFormOpen' id='addReplyFormOpenBtn"+commentsList[i].commentNo+"' style='border: 0;background-color: transparent; margin-left: 15px; '>답글쓰기</button></div>";
+				        }else{
+				        	commnInfo+="<div style='color: gray; font-size:small;'>"+formattedDate+"</div>";
+				        }
+				        
+				        
+				        commnInfo+="<div id='replyFormBody"+commentsList[i].commentNo+"' style='transparent; margin-top: 15px;'></div>";
+				        if(commentsList[i].parent != null){
+				        	commnInfo+="</div>"	
+				        }
+				        commnInfo+="</li>";
+				        commnInfo+="<hr style='color: gray'>"
+					}
+				        
+					
+						
+					
+					
+			        
+			        
+				}
+				
+				$("#commentsList").html(commnInfo);
+	        	
+				//댓글 수정 버튼 클릭시 수정 form show
+				$(".updateCo").click(function() {
+					var commentNo = $(this).attr("id").replace("updateCommentBtn", "");
+					getCommentContent(commentNo);
+				});
+				
+				//댓글 삭제 버튼 클릭시
+				$(".deleteCo").click(function() {
+					var result = confirm("댓글을 삭제하시겠습니까?");
+					if(result){		
+						var commentNo = $(this).attr("id").replace("deleteCommentBtn", "");
+						deleteComment(commentNo);
+					}
+				});
+				
+				//답댓글 등록form open
+				$(".addReplyFormOpen").click(function() {
+					var commentNo = $(this).attr("id").replace("addReplyFormOpenBtn", "");
+					let replyInfo="";
+					replyInfo+="<textarea class='form-control replyContent' rows='3' name='replyContent' id='replyContent"+commentNo+"' placeholder='답글을 작성해주세요.' required='required'></textarea>";
+					replyInfo+="<button type='button' id='replyRegiBtn"+commentNo+"' class='btn btn-light replyRegi' disabled='disabled'>등록</button>";
+					replyInfo+="<button type='button' id='replyRegiCanBtn"+commentNo+"' class='btn btn-light replyRegiCan'>취소</button>";
+					
+					$("#replyFormBody"+commentNo).html(replyInfo);
+					
+					//답댓글 등록 취소 버튼 클릭시
+					$(".replyRegiCan").click(function() {
+						$("#replyFormBody"+commentNo).html("");
+						
+					});
+					
+					// 답댓글 등록 버튼의 활성화 여부 결정
+					$("#replyContent"+commentNo).on("keyup", function() {
+						var replyContent = $(this).val().trim();
+				    
+				        if (replyContent !== "") {
+				            $("#replyRegiBtn"+commentNo).prop("disabled", false);
+				        } else {
+				            $("#replyRegiBtn"+commentNo).prop("disabled", true);
+				        }
+				    });
+					
+					//답댓글 등록 버튼 클릭시
+					$(".replyRegi").click(function() {
+						var content = $("#replyContent"+commentNo).val().trim();
+					    var writer = "java"//나중에 세션id로 수정해주기.
+					    var postNo = [[${{post.postNo}}]];
+
+					    var reply = {
+					        "content": content,
+					        "writer": {
+					            "id" : writer
+					        },
+					        "postNo": {
+					            "postNo": postNo
+					        },
+					        "parent" : {
+					            "commentNo": commentNo
+					        }
+					    };
+
+					    $.ajax({
+					        type: 'POST',
+					        url: '/comments/regi',
+					        contentType: 'application/json',
+					        data: JSON.stringify(reply),
+					        dataType: 'json',
+					        success: function(result) {
+					        	$("#replyContent"+commentNo).val("");
+					        	$("#replyFormBody"+commentNo).html("");
+					        	commentList();
+					        	//답댓글 리스트 불러오기 펑션 추가하기
+					        },
+					        error: function(request, status, error) {
+					            console.log(error);
+					            alert("답댓글 등록 실패...");
+					        }
+					    });
+						//regiReplyContent(commentNo);
+					});
+					
+				});
+				
+				
+	        },
+	        error: function(request, status, error) {
+	            console.log(error);
+	            alert("댓글 목록을 가져오는데 실패했습니다.");
+	        }
+	    });
+	}
+	
+
+
+	//날짜 포맷팅
+	function formatDate(dateArray) {
+	    var year = dateArray[0];
+	    var month = dateArray[1];
+	    var day = dateArray[2];
+	    var hours = dateArray[3];
+	    var minutes = dateArray[4];
+	    
+	    // Date 객체 생성
+	    var date = new Date(year, month - 1, day, hours, minutes);
+
+	    // 유효한 Date 객체인지 확인
+	    if (isNaN(date)) {
+	        return "Invalid Date";
+	    }
+
+	    // 포맷팅할 때 사용할 함수
+	    function addLeadingZero(number) {
+	        return number < 10 ? "0" + number : number;
+	    }
+
+	    // 포맷팅된 날짜 형식 (예: "2023-08-10 14:30")
+	    var formattedDate =
+	        date.getFullYear() + "-" +
+	        addLeadingZero(date.getMonth() + 1) + "-" +
+	        addLeadingZero(date.getDate()) + " " +
+	        addLeadingZero(date.getHours()) + ":" +
+	        addLeadingZero(date.getMinutes());
+
+	    return formattedDate;
+	}
+
+	//글 삭제하기 버튼 클릭시
+	$("#deleteBtn").click(function() {
+		let result = confirm("글을 삭제하시겠습니까?");
+		if(result){			
+			removeForm.submit();
+		}
+	});
+	
+	//댓글등록
+	$("#commentRegiBtn").click(function() {
+		var content = $("#commentContent").val().trim();
+	    var writer = "lovefubao"//나중에 세션id로 수정해주기.
+	    var postNo = [[${{post.postNo}}]];
+
+	    var comment = {
+	        "content": content,
+	        "writer": {
+	            "id" : writer
+	        },
+	        "postNo": {
+	            "postNo": postNo
+	        }
+	    };
+
+	    $.ajax({
+	        type: 'POST',
+	        url: '/comments/regi',
+	        contentType: 'application/json',
+	        data: JSON.stringify(comment),
+	        dataType: 'json',
+	        success: function(result) {
+	        	$("#commentContent").val("");
+	        	noneCommentForm();
+	        	commentList();
+	        },
+	        error: function(request, status, error) {
+	            console.log(error);
+	            alert("댓글 등록 실패...");
+	        }
+	    });
+	});
+	
+	
+	//댓글 수정시 댓글 내용 가져오기
+	function getCommentContent(commentNo) {
+		 $.ajax({
+		        type: 'GET',
+		        url: '/comments/readOne/' + commentNo,
+		        success: function(comment) {
+		        	
+					let commUpInfo="";
+					
+					commUpInfo+="<div id='commentUpdateShowForm1' style='width: 100%'>";
+					
+					commUpInfo+="<div style='font-weight:bold; margin-bottom: 5px; margin-left: 10px'>"+comment.writer.id+"</div>";
+					commUpInfo+="<textarea class='form-control' rows='3' name='commentUpdateContent' id='commentUpdateContent'>"+comment.content+"</textarea>";
+					commUpInfo+="<button type='button' id='commUpdaConfBtn' class='btn btn-light'>수정</button>";
+					commUpInfo+="<button type='button' id='commentUpdateCanBtn' class='btn btn-light'>취소</button>";
+					commUpInfo+="</div>";
+					
+					$("#commentByList"+commentNo).html(commUpInfo);
+					
+					//댓글 작성시 버튼 활성화
+					$("#commentUpdateContent ").on("keyup", function() {
+				        // textarea의 입력값을 가져온다
+				        var commentContent = $(this).val().trim();
+				        
+				        // 등록 버튼의 활성화 여부를 결정한다
+				        if (commentContent !== "") {
+				            $("#commUpdaConfBtn").prop("disabled", false);
+				        } else {
+				            $("#commUpdaConfBtn").prop("disabled", true);
+				        }
+				    });
+		        	
+					//댓글 수정 form에서 수정 버튼 클릭시 댓글 수정
+					$("#commUpdaConfBtn").click(function() {
+						var commentContent = $("#commentUpdateContent").val().trim();
+						updateComment(commentNo, commentContent);
+					});
+					
+					//댓글 수정 취소시 리스트로 이동
+					$("#commentUpdateCanBtn").click(function() {
+						commentList();
+					});
+					
+		        },
+		        error: function(request, status, error) {
+		            console.log(error);
+		            alert("댓글 내용 가져오기 실패...");
+		        }
+		    });
+	}
+	
+	//댓글 수정
+	function updateComment(commentNo, content) {
+		
+		var comment = {
+		        "commentNo": commentNo,
+		        "content": content
+		};
+		
+		 $.ajax({
+		        type: 'PUT',
+		        url: '/comments/modify',
+		        contentType: 'application/json',
+		        data: JSON.stringify(comment),
+		        success: function() {
+		        	$("#commentContent").val("");
+		        	noneCommentForm();
+		        	commentList();
+		        },
+		        error: function(request, status, error) {
+		            console.log(error);
+		            alert("댓글 수정 실패...");
+		        }
+		    });
+	}
+	
+	//댓글 삭제
+	function deleteComment(commentNo) {
+		 $.ajax({
+		        type: 'DELETE',
+		        url: '/comments/remove/' + commentNo,
+		        success: function() {
+		        	commentList();
+		        },
+		        error: function(request, status, error) {
+		            console.log(error);
+		            alert("댓글 삭제 실패...");
+		        }
+		    });
+	}
+	
+	//답댓글 등록
+	function regiReplyContent(commentNo){
+		
+	}
+	
+});
+</script>
+
+	<main class="flex-shrink-0">
+		<section>
+			<div class="container px-5 pb-5">
+				<form id="removeForm" method="post" th:action="@{/posts/removePost}"
+					enctype="multipart/form-data">
+					<div class="container">
+						<h3 class="title" th:text="${post.title}"
+							style="margin-bottom: 10px; ">제목</h3>
+						<span th:text="${post.writer.id}" style='margin-left: 10px;'></span>
+						<span
+							th:text="${#temporals.format(post.createdDate, 'yy-MM-dd HH:mm')}"
+							style='margin-right: 10px; float: right; '></span>
+						<div>
+							<pre
+								style='border-top: 2px solid; border-color: #378cf5; margin-top: 15px; margin-bottom: 20px'></pre>
+							<pre class="boardTextarea" style="height: 280px"
+								th:text="${post.content}">본문내용</pre>
+						</div>
+						<div th:if="${post.imageList != null and not #lists.isEmpty(post.imageList)}">
+							<div th:each="image : ${post.imageList}">
+			                    <img th:src="@{'/display/' + ${image.uuid} + '_' + ${image.fileName}}" alt="Image" width="400">
+			                </div>
+		                </div>
+						
+					</div>
+					<input type="hidden" id="postNo" name="postNo" value="postNo"
+						th:value="${post.postNo}"> <input type="hidden"
+						id="writer" name="writer" value="writer" th:value="${post.writer}">
+
+					<div class="btn-group" role="group" style="float: right;"
+						aria-label="Basic outlined example">
+						<button type="button" class="btn btn-light"
+							th:onclick="|location.href='@{/posts/modifyForm(postNo=${post.postNo})}'|">수정</button>
+						<button type="button" class="btn btn-light" id="deleteBtn">삭제</button>
+						<button type="button" class="btn btn-light"
+							th:onclick="|location.href='@{/posts/list/1}'|">목록으로</button>
+					</div>
+				</form>
+				<br> <br> <br>
+				<button type="button" class="btn btn-light" style="float: right;"
+					th:onclick="|location.href='@{/posts/list/1}'|">목록으로</button>
+					
+				<textarea name="content" id="editor1">
+				
+				</textarea>
+
+			</div>
+		</section>
+		
+		<section class="mb-5" style="margin-top: 20px">
+			<div class="container px-5 pb-5">
+				<div class="card bg-light">
+					<div class="card-body">
+						<!-- Comment with nested comments-->
+						<div id="commentsTableDiv">
+							<ul id="commentsList">
+								
+							</ul>
+						</div>
+						<!-- 댓글 작성 form -->
+						<div style="margin-top: 15px">
+							<button type="button" id="showCommentFormBtn" class="btn btn-light">댓글쓰기</button>
+							<div id="commentRegiShowForm" style="display: none;">
+							    <!-- Comment form -->
+							    <textarea class="form-control" rows="3" name="commentContent" id="commentContent" placeholder="댓글을 작성해주세요." required="required"></textarea>
+							    <button type="button" id="commentRegiBtn" class="btn btn-light" disabled="disabled">등록</button>
+							    <button type="button" id="commentRegiCanBtn" class="btn btn-light">취소</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+		
+	</main>
+</div>
+

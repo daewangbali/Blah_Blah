@@ -1,0 +1,106 @@
+﻿<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{fragments/layout.html}"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<div layout:fragment="main">
+	<script type="text/javascript" th:inline="javascript">
+$(function() {
+	
+	//게시글 삭제시 보내는 메세지가 있는 경우 
+	let message = /*[[${message}]]*/null;
+	if(message!=null){
+		alert(message);
+	}
+});
+
+</script>
+
+
+	<main class="flex-shrink-0">
+		<div class="container px-5 pb-5" style="height: 600px" >
+			<table class="table table-hover">
+				<thead>
+					<tr>
+						<!-- <th></th>
+						<th scope="col"></th> -->
+						<th scope="col"></th>
+						<th scope="col"></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="post : ${postsPage.content}">
+						<!-- <td th:text="${post.postNo}" style="width: 5%"></td> -->
+						<td style="width: 80%; font-weight: bold; "><a style="margin-left: 40px"
+							th:text="${post.title}"
+							th:href="@{/posts/postView(postNo=${post.postNo})}"></a></td>
+						<!-- <td th:text="${post.content}" style="width: 35%"></td> -->
+						<td
+							th:text="${#temporals.format(post.createdDate.atZone('Asia/Seoul'), 'yy-MM-dd HH:mm')}"
+							style="width: 20%">regiDate</td>
+					</tr>
+				</tbody>
+			</table>
+			
+		<div class="container px-5 pb-5" >
+			<div th:if="${postsPage.empty}">
+		        <div class="container" style="text-align: center; padding: 100px 0"><p>등록된 게시글이 없습니다.</p></div>
+		    </div>
+    		<div th:unless="${postsPage.empty}">
+				<nav aria-label="Page navigation example">
+					<ul class="pagination justify-content-center">
+						<li class="page-item" th:class="${postsPage.first} ? 'disabled'">
+							<a class="page-link"
+							th:href="@{/posts/list/{page}(page=${postsPage.number})}"
+							tabindex="-1"><i class="bi bi-chevron-left"></i></a>
+						</li>
+						<li th:each="i : ${#numbers.sequence(1, postsPage.totalPages)}"
+							class="page-item"
+							th:class="${i == postsPage.number + 1} ? 'active'"><a
+							class="page-link" th:href="@{/posts/list/{page}(page=${i})}"
+							th:text="${i}"></a></li>
+						<li class="page-item" th:class="${postsPage.last} ? 'disabled'">
+							<a class="page-link"
+							th:href="@{/posts/list/{page}(page=${postsPage.number + 2})}"><i class="bi bi-chevron-right"></i></a>
+						</li>
+					</ul>
+				</nav>
+			</div>
+		</div>
+		<form method="get" th:action="@{/posts/searchPostsList/1}"
+				enctype="multipart/form-data">
+		<div class="d-flex justify-content-center" >
+			<div class="input-group " style="justify-content: center; width: 500px; margin-bottom: 30px; ">
+				<select class="form-control" name="searchType" style="width: 20%">
+	  				<option value="t">제목</option>
+	  				<option value="c">내용</option>
+	  				<option value="w">작성자</option>
+	  				<option value="tc">제목 내용</option>
+				</select>
+				<input class="form-control" type="text" id="searchContent" name="searchContent" style="width: 70%" aria-describedby="btnNavbarSearch">
+				<button class="btn btn-outline-secondary" type="submit" style="width: 10%">
+				 <i class="bi bi-search"></i></button>
+            </div>
+		</div>
+		</form>
+		<div>
+		<button type="button" class="btn btn-outline-primary"
+				th:onclick="|location.href='@{/posts/registerForm}'|"
+				style="float: right;">글쓰기</button>
+		</div>
+		<div>
+		
+		<!-- <button type="button" class="btn btn-outline-secondary"
+				th:onclick="|location.href='@{/posts/registerEditorForm}'|"
+				style="float: right;">글쓰기</button> -->
+		</div>
+
+
+
+		</div>
+
+		
+
+	</main>
+</div>
+</html>

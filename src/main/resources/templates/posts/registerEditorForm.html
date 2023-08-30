@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{fragments/layout.html}"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+	
+<div layout:fragment="main">
+
+	<script type="text/javascript" th:inline="javascript">
+	    
+	    $(function() {
+			//CKEDITOR.replace('editor');
+			 CKEDITOR.replace( 'editor', {//해당 이름으로 된 textarea에 에디터를 적용
+		         width:'100%',
+		         height:'400px',
+		         filebrowserUploadUrl:  "/uploadImage"
+		     });
+			 CKEDITOR.config.extraPlugins = 'exportpdf';
+			 CKEDITOR.config.extraPlugins = 'uploadimage';
+			 CKEDITOR.config.pasteImages = true;
+			 CKEDITOR.config.imageUpload = false; 
+			 CKEDITOR.config.imageMaxSize = 1024 * 1024; 
+	    	
+	    });
+	</script>
+
+	<main class="flex-shrink-0">
+		<div class="container px-5 pb-5">
+			<form method="post" th:action="@{/posts/registerPost}"
+				enctype="multipart/form-data">
+				<table class="table">
+					<tr>
+						<td><input type="text" name="title" placeholder="제목을 입력하세요."
+							required="required" style="width: 100%; border: none"></td>
+					</tr>
+					<tr>
+						<td>
+							<div id="editor">
+								
+							</div>
+						</td>
+						<!-- 
+						<td>
+						<div class="form-group row">
+				            <label for="contents" class="col-sm-2 col-form-label"><strong>내용</strong></label>
+				            <div class="col-sm-10">
+				                textarea
+				            </div>
+				        </div>
+				        </td>
+						
+						<td><textarea rows="10" class="form-control" name="content"
+								placeholder="내용을 입력하세요." required="required" style="width: 100%; border: none"></textarea></td>
+						 -->
+					</tr>
+					<tr>
+					    <td>
+					        <label for="imageFiles">이미지 업로드</label>
+					        <input type="file" name="imageFiles" id="imageFiles" accept="image/*" multiple>
+					    </td>
+					</tr>
+
+				</table>
+
+				<div class="text-center">
+					<input type="hidden" name="writer" value="java" th:value="java">
+					<br>
+					<button type="submit" class="btn btn-success">확인</button>
+					<button type="button" class="btn btn-light"
+						th:onclick="|location.href='@{/posts/list}'|">취소</button>
+				</div>
+			</form>
+
+		</div>
+	</main>
+</div>

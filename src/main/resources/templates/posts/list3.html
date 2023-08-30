@@ -1,0 +1,52 @@
+﻿<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{fragments/layout.html}"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<div layout:fragment="main">
+<script type="text/javascript" th:inline="javascript">
+$(function() {
+	
+	//게시글 삭제시 보내는 메세지가 있는 경우 
+	let message = [[${message}]];
+	if(message!=null){
+		alert(message);
+	}
+});
+
+</script>
+
+
+	<main class="flex-shrink-0">
+		<div class="container px-5 pb-5">
+			<table class="table table-hover">
+				<thead>
+					<tr>
+						<th></th>
+						<th scope="col"></th>
+						<th scope="col"></th>
+						<th scope="col"></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="post:${postslist}">
+						<td th:text="${post.postNo}" style="width: 5%"></td>
+						<td  style="width: 40%; font-weight: bold;">
+							<a th:text="${post.title}" th:href="@{/posts/postView(postNo=${post.postNo})}"></a>
+						</td>﻿
+						<td th:text="${post.content}" style="width: 35%">content</td>
+						<td
+							th:text="${#temporals.format(post.createdDate, 'yy-MM-dd HH:MM')}"
+							style="width: 20%">regiDate</td>
+					</tr>
+				</tbody>
+			</table>
+			<button type="button" class="btn btn-primary"
+				th:onclick="|location.href='@{/posts/registerForm}'|"
+				style="float: right;">글쓰기</button>
+		</div>
+		<div></div>
+
+	</main>
+</div>
+</html>
